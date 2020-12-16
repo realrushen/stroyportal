@@ -4,10 +4,8 @@ from django.core import serializers
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
 class HttpResponseAjax(HttpResponse):
-    def __init__(self, content, status='ok', **kwargs):
+    def __init__(self, status='ok', **kwargs):
         kwargs['status'] = status
-        # TODO: remove extra convertation
-        kwargs['content'] = json.loads(content)
         super(HttpResponseAjax, self).__init__(
             content=json.dumps(kwargs),
             content_type='application/json'
@@ -15,11 +13,12 @@ class HttpResponseAjax(HttpResponse):
 
 
 class HttpResponseAjaxError(HttpResponseAjax):
-    def __init__(self, code, massage):
+    def __init__(self, code, message):
         super(HttpResponseAjaxError, self).__init__(
             status='error', 
             code=code, 
-            massage = massage)
+            message = message
+            )
 
 
 def serialize_to_json(query_set):
@@ -55,8 +54,5 @@ def make_pagination(request, queryset, page_size):
         'num_pages': paginator.num_pages,
         'next': objects.next_page_number() if objects.has_next() else None,
         'previous': objects.previous_page_number() if objects.has_previous() else None,
-        'test': querystring
-
     }
-
 

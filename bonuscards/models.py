@@ -1,9 +1,15 @@
 from django.db import models
 from django.db.models.query_utils import Q
+from django.forms.models import model_to_dict
+from .utils import serialize_to_json
+import json
 
 
 
 class BonusCardSearchManager(models.Manager):
+    """
+    Не нашел хорошей замены JsonRespose, поэтому пришлось добавить костыль
+    """
     search_fields = {
         'number': '__contains',
         'series': '__contains',
@@ -76,6 +82,15 @@ class BonusCard(models.Model):
 
     def __str__(self):
         return '{0} {1}'.format(self.series, self.number)
+    
+
+    def as_dict(self):
+        """
+        Не нашел хорошей замены JsonRespose, поэтому пришлось добавить костыль
+        """
+        return json.loads(serialize_to_json([self]))
+            
+        
 
   
 

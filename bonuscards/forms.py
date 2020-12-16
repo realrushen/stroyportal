@@ -8,9 +8,8 @@ class BonusCardForm(forms.ModelForm):
         fields = (
             'series', 
             'number', 
-            'release_date', 
             'activity_expires_date',
             'use_date',
             'amount',
-            'activity_status'
+            'activity_status',
         )
