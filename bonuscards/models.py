@@ -9,7 +9,7 @@ from .utils import serialize_to_json
 
 class BonusCardSearchManager(models.Manager):
     """
-    Кастомныйм енеджер реализовывает поиск бонусных карт
+    Кастомный менеджер реализует поиск бонусных карт
     """
     search_fields = {
         'number': '__contains',
@@ -46,7 +46,7 @@ class BonusCard(models.Model):
             'activity_expires_date', 
             'activity_status'
     )
-    
+
     NOT_ACTIVE = 1
     ACTIVE = 2
     EXPIRED = 3
