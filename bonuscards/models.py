@@ -1,14 +1,15 @@
+import json
+
 from django.db import models
 from django.db.models.query_utils import Q
-from django.forms.models import model_to_dict
+
 from .utils import serialize_to_json
-import json
 
 
 
 class BonusCardSearchManager(models.Manager):
     """
-    Не нашел хорошей замены JsonRespose, поэтому пришлось добавить костыль
+    Кастомныйм енеджер реализовывает поиск бонусных карт
     """
     search_fields = {
         'number': '__contains',
@@ -17,6 +18,7 @@ class BonusCardSearchManager(models.Manager):
         'activity_expires_date': '',
         'activity_status': '',
     }
+    
 
     def search(self, search_query):
         q = []
@@ -33,22 +35,18 @@ class BonusCardSearchManager(models.Manager):
 
 class BonusCard(models.Model):
     """
-     Бонусные карты
-     Поля:
-     - серия карты
-     - номер карты
-     - дата выпуска карты
-     - дата окончания активности карты
-     - дата использования
-     - сумма
-     - статус карты (не активирована/активирована/просрочена).
-
-     Функционал приложения:
-      1. список карт с полями: серия, номер, дата выпуска, дата окончания активности, статус
-      2. создание карты
-      3. поиск по этим же полям
-      4. удаление карты
+    Бонусная карта
     """
+    objects = models.Manager()
+    search_objects = BonusCardSearchManager()
+    serialization_fields = (
+            'series', 
+            'number', 
+            'release_date', 
+            'activity_expires_date', 
+            'activity_status'
+    )
+    
     NOT_ACTIVE = 1
     ACTIVE = 2
     EXPIRED = 3
@@ -72,8 +70,6 @@ class BonusCard(models.Model):
         verbose_name='Статус'
     )
 
-    objects = models.Manager()
-    search_objects = BonusCardSearchManager()
 
     class Meta:
         ordering = ['release_date']
@@ -88,7 +84,7 @@ class BonusCard(models.Model):
         """
         Не нашел хорошей замены JsonRespose, поэтому пришлось добавить костыль
         """
-        return json.loads(serialize_to_json([self]))
+        return json.loads(serialize_to_json([self], type(self).serialization_fields))
             
         
 

@@ -1,22 +1,14 @@
 from django.views.generic import View
 from django.db import transaction
-from django.forms import model_to_dict
-from .utils import HttpResponseAjax, HttpResponseAjaxError, serialize_to_json
+
 from .models import BonusCard
-from .utils import make_pagination
+from .utils import make_pagination, HttpResponseAjax, HttpResponseAjaxError, serialize_to_json
 from .forms import BonusCardForm
-import pdb
-import json
 
 
-class BonusCardAjaxView(View):
-    search_fields = [
-        'series', 
-        'number', 
-        'release_date', 
-        'activity_expires_date', 
-        'activity_status',
-        ]
+class BonusCardAjaxListView(View):
+    http_method_names = ['get', 'post']
+    
 
     def get(self, request, *args, **kwargs):
         if request.is_ajax():
@@ -28,23 +20,53 @@ class BonusCardAjaxView(View):
                 page_size=50)
             data = [card.as_dict() for card in cards]
             kwargs['pagination'] = pagination
-            response = HttpResponseAjax(data=data, **kwargs)
+            kwargs['data'] = data
+            response = HttpResponseAjax(status=200, **kwargs)
         else:
-            response = HttpResponseAjaxError(code='ajax_required', message='This url accepts only AJAX requests')
+            response = HttpResponseAjaxError(
+                status=400,
+                error_code='ajax_required',
+                message='This url accepts only AJAX requests'
+            )
         return response
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         if request.is_ajax():
             form = BonusCardForm(request.POST)
             if form.is_valid():
-                with transaction.atomic():
-                    instance = form.save().as_dict()
-                response = HttpResponseAjax(data=instance)
+                instance = form.save().as_dict()
+                response = HttpResponseAjax(
+                    status=201,
+                    data=instance
+                    )
             else:
                 response = HttpResponseAjaxError(
-                    code='validation_error', 
+                    status=400,
+                    error_code='validation_error', 
                     message=form.errors
                     )
         else:
-            response = HttpResponseAjaxError(code='ajax_required', message='This url accepts only AJAX requests')
+            response = HttpResponseAjaxError(
+                status=400,
+                error_code='ajax_required',
+                message='This url accepts only AJAX requests'
+            )
         return response
+    
+class BonusCardDeleteAjaxView(View):
+    http_method_names = ['delete']
+    
+    def delete(self, request, pk, *args, **kwargs):
+        try:
+            card = BonusCard.objects.get(pk=pk)
+        except BonusCard.DoesNotExist:
+            response = HttpResponseAjaxError(
+                status=404, 
+                error_code='not_found',
+                message="Resourse doesn't exists in database"
+            ) 
+        else:
+            card.delete()
+            response = HttpResponseAjax(status=204)
+        return response        

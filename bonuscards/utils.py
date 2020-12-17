@@ -4,40 +4,43 @@ from django.core import serializers
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
 class HttpResponseAjax(HttpResponse):
-    def __init__(self, status='ok', **kwargs):
-        kwargs['status'] = status
+    """
+    Класс замена JsonResponse для ответа клиентской стороне приложения.
+    Кроме того здесь реализовано добавление заголовка content_type.
+    Принимает 1 обязательный аргумент с кодом ответа HTTP.
+    API предполагает, что пользователь класса добавлять в kwargs тело ответа,
+    который будет сериализован в JSON.
+    """
+    def __init__(self, status, **kwargs):
         super(HttpResponseAjax, self).__init__(
+            status=status,
             content=json.dumps(kwargs),
             content_type='application/json'
         )
 
 
 class HttpResponseAjaxError(HttpResponseAjax):
-    def __init__(self, code, message):
+    """
+    
+    """
+    def __init__(self, *, status, error_code, message):
         super(HttpResponseAjaxError, self).__init__(
-            status='error', 
-            code=code, 
+            status=status, 
+            error_code=error_code, 
             message = message
             )
 
 
-def serialize_to_json(query_set):
+def serialize_to_json(query_set, fields):
     return serializers.serialize(
         "json",
         query_set,
-        fields=(
-            'series', 
-            'number', 
-            'release_date', 
-            'activity_expires_date', 
-            'activity_status'
-            )
+        fields=fields
         )
 
 def make_pagination(request, queryset, page_size):
     """
-    Standart pagination
-    TODO: return 'previous' and 'next' page value as url
+    Стандартная пагинация. Пагинацию с использованием Link header из RFC 8288, решил не использовать.
     """
     page = request.GET.get('page', 1)
     querystring = request.GET.dict()
